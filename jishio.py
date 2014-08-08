@@ -2,72 +2,49 @@
 # -*- coding: utf-8 -*-
 import sys
 import urllib2
+import html2text
 
 
 class JishioGrabber(object):
     def __init__(self):
         super(JishioGrabber, self).__init__()
         self.x = None
-
-    def findword(self, japword="", engword=""):
+    #japword=u"岡".encode('utf-8')
+    #engword=u"mother".encode('utf-8')
+    def findword(self, japword=u"", engword=""):
         x = urllib2.urlopen("http://m.jisho.org/words?jap="+japword+"&eng="+engword+"&dict=edict")
         x = x.read()
-        if x.find(" <!-- Found no words -->") != -1:
-            sys.exit()
-        x = x.split(' <!-- Found words -->')
-        x = x[1]
-        y = """<MENU>
-                        <LI><A href="/words/">Words</A>
-                        <LI><A href="/kanji/">Kanji</A>
-                        <LI><A href="/sentences/">Sentences</A>
-                    </MENU>
-                </P>
-
-                <P>
-                    Denshi Jisho uses dictionaries provided by the <A HREF="http://www.edrdg.org/edrdg/licence.html">Electronic Dictionary Research and Development Group</A>.
-            </BODY>
-        </HTML>
-        """
-        index_len = len(x)-(len(y)+43+30)
-        x = x[:index_len-6]
-        x = x.split("<HR>")
-        x = x[1:]
-        for i in range(len(x)):
-            x[i] = x[i].replace("\n", "")
-            x[i] = x[i].split('<BR>')
+        textfromhtml = html2text.html2text(x.decode('utf-8'))
+        textfromhtml = textfromhtml.split(u'* * *'.encode('utf-8'))
+        for i in range(len(textfromhtml)):
             try:
-                x[i].remove(x[i][1])
-                for j in (0, 1):
-                    x[i][j] = x[i][j].replace("<P>", "")
-                    x[i][j] = x[i][j].replace("</P>", "")
+                textfromhtml[i-1] = textfromhtml[i-1].replace(u'\n'.encode('utf-8'), '')
             except:
                 pass
-            x[i][0] = x[i][0].replace("<A href=\'", "")
-            x[i][0] = x[i][0].replace("</A>", "")
-            x[i][0] = x[i][0].split("\'>")
-            x[i].append(x[i][0][0])
-            x[i][0].pop(0)
-            x[i][1] = x[i][1].replace("<span class=\"tags mn_tags\" title=\"arch\">", "")
-            x[i][1] = x[i][1].replace("<span class=\"tags mn_tags\" title=\"ksb:\">", "")
-            x[i][1] = x[i][1].replace("</span>", "")
-            x[i][1] = x[i][1].replace("   ", " ")
-            self.x = x
-            #kanji = x[i][0][0]
-            #link = x[i][2]
-            #meaning = x[i][1]
+        self.numberofwords = textfromhtml[1]
+        self.wholewords = textfromhtml[2:len(textfromhtml)-3]
+        print self.numberofwords
+        print len(self.wholewords)
+    def word(self, number=0):
 
-    def kanji(self, y):
-        return self.x[y][0][0]
+        if (len(self.wholewords) < 5) and (number == 0):
+            self.words = u'\n'.encode('utf-8').join(self.wholewords)
+            return self.words
 
-    def link(self, y):
-        httpjishio = "http://jishio.org"
-        return httpjishio+str(self.x[y][2])
+        if (len(self.wholewords) > 5) and (bool(number) is True):
+            self.words = u'\n'.encode('utf-8').join(self.wholewords[:number])
+            return self.words
 
-    def meaning(self, y):
-        return self.x[y][1]
+        if (len(self.wholewords) > 5) and (number == 0):
+            self.words = u'\n'.encode('utf-8').join(self.wholewords[:5])
+            return self.words
 
-Jishio = JishioGrabber()
-Jishio.findword(engword="mother")
-print Jishio.kanji(0)
-print Jishio.link(0)
-print Jishio.meaning(0)
+        else:
+            print "boo"
+
+
+JishioGrabberX = JishioGrabber()
+moe = "mother"
+engw = u"%s".encode('utf-8') % moe
+JishioGrabberX.findword(engword=engw)
+print JishioGrabberX.word()
